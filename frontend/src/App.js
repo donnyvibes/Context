@@ -99,23 +99,26 @@ const LoginPage = ({ onLogin }) => {
 };
 
 const LoadingSpinner = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="loading-spinner"></div>
-    <span className="ml-2 text-gray-600">Loading...</span>
+  <div className="flex items-center justify-center min-h-screen ios-safe-area">
+    <div className="ios-activity-indicator"></div>
+    <span className="ml-2 ios-body text-gray-600">Loading...</span>
   </div>
 );
 
 const Header = ({ user, onLogout, onShowCreate }) => (
-  <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+  <header className="ios-nav-bar border-b border-gray-200 sticky top-0 z-10">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex justify-between items-center h-16">
         <div className="flex items-center">
-          <h1 className="text-xl font-bold text-gray-900">ContextOS</h1>
+          <h1 className="ios-title2 text-gray-900">ContextOS</h1>
         </div>
         <div className="flex items-center space-x-4">
           <button
-            onClick={onShowCreate}
-            className="btn-primary text-sm py-2 px-4"
+            onClick={() => {
+              iosNative.hapticFeedback('light');
+              onShowCreate();
+            }}
+            className="ios-btn-primary text-sm py-2 px-4"
           >
             + New Prompt
           </button>
@@ -126,8 +129,11 @@ const Header = ({ user, onLogout, onShowCreate }) => (
               className="w-8 h-8 rounded-full"
             />
             <button
-              onClick={onLogout}
-              className="text-sm text-gray-600 hover:text-gray-800"
+              onClick={() => {
+                iosNative.hapticFeedback('medium');
+                onLogout();
+              }}
+              className="ios-callout text-gray-600 hover:text-gray-800"
             >
               Logout
             </button>
