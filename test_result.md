@@ -353,11 +353,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Login page displays correctly on mobile"
-    - "Mobile responsive design"
-    - "Create new prompts with categories"
-    - "Generate content from templates"
-    - "Session handling and user profile loading"
+    - "iOS Design System Integration"
+    - "iOS Native Patterns Implementation"
+    - "iOS Performance Optimizations"
+    - "iOS Native Feature Integration"
+    - "iOS Gestures and Interactions"
+    - "PWA iOS Optimization"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
