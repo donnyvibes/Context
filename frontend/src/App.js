@@ -61,32 +61,35 @@ class ApiService {
 // Components
 const LoginPage = ({ onLogin }) => {
   const handleLogin = () => {
+    // Add haptic feedback for iOS
+    iosNative.hapticFeedback('medium');
+    
     const currentUrl = window.location.origin;
     window.location.href = `${AUTH_URL}?redirect=${encodeURIComponent(currentUrl)}`;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 ios-safe-area">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">ContextOS</h1>
-          <p className="text-lg text-gray-600 mb-8">
+          <h1 className="ios-large-title text-gray-900 mb-2">ContextOS</h1>
+          <p className="ios-title2 text-gray-600 mb-8">
             Your AI Prompt Manager
           </p>
-          <p className="text-sm text-gray-500 mb-8">
+          <p className="ios-body text-gray-500 mb-8">
             Organize, search, and template your AI prompts like a pro
           </p>
         </div>
         
-        <div className="card">
+        <div className="ios-card-large">
           <button
             onClick={handleLogin}
-            className="btn-primary w-full text-lg py-4"
+            className="ios-btn-primary w-full text-lg py-4 ios-haptic-medium"
           >
             Login to Get Started
           </button>
           
-          <p className="text-xs text-gray-500 mt-4 text-center">
+          <p className="ios-footnote text-gray-500 mt-4 text-center">
             By signing in, you agree to our terms of service
           </p>
         </div>
