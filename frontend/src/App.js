@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import iosNative from './utils/iosNative';
 import { CategoryFilter, SearchBar, PromptCard, CreatePromptModal, GenerateModal } from './components/IOSComponents';
@@ -58,6 +58,9 @@ class ApiService {
     });
   }
 }
+
+// Make ApiService available globally for components
+window.ApiService = ApiService;
 
 // Components
 const LoginPage = ({ onLogin }) => {
@@ -145,311 +148,6 @@ const Header = ({ user, onLogout, onShowCreate }) => (
   </header>
 );
 
-const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => (
-  <div className="flex space-x-2 overflow-x-auto pb-2 mb-4">
-    <button
-      onClick={() => onSelectCategory('')}
-      className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
-        selectedCategory === '' 
-          ? 'bg-blue-500 text-white' 
-          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-      }`}
-    >
-      All
-    </button>
-    {categories.map(category => (
-      <button
-        key={category.id}
-        onClick={() => onSelectCategory(category.id)}
-        className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
-          selectedCategory === category.id 
-            ? 'bg-blue-500 text-white' 
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-        }`}
-      >
-        {category.name}
-      </button>
-    ))}
-  </div>
-);
-
-const SearchBar = ({ searchQuery, onSearchChange }) => (
-  <div className="mb-4">
-    <input
-      type="text"
-      placeholder="Search prompts..."
-      value={searchQuery}
-      onChange={(e) => onSearchChange(e.target.value)}
-      className="input"
-    />
-  </div>
-);
-
-const PromptCard = ({ prompt, categories, onEdit, onDelete, onGenerate }) => {
-  const category = categories.find(cat => cat.id === prompt.category);
-  
-  return (
-    <div className="card hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start mb-3">
-        <h3 className="text-lg font-semibold text-gray-900 truncate flex-1">
-          {prompt.title}
-        </h3>
-        <div className="flex space-x-2 ml-2">
-          <button
-            onClick={() => onEdit(prompt)}
-            className="text-blue-500 hover:text-blue-700 text-sm"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => onDelete(prompt.id)}
-            className="text-red-500 hover:text-red-700 text-sm"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-      
-      <div className="mb-3">
-        <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-          {category?.name || 'General'}
-        </span>
-        {prompt.variables.length > 0 && (
-          <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full ml-2">
-            {prompt.variables.length} variables
-          </span>
-        )}
-      </div>
-      
-      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-        {prompt.content}
-      </p>
-      
-      {prompt.variables.length > 0 && (
-        <button
-          onClick={() => onGenerate(prompt)}
-          className="btn-secondary text-sm w-full"
-        >
-          Generate with Variables
-        </button>
-      )}
-    </div>
-  );
-};
-
-const CreatePromptModal = ({ isOpen, onClose, onSubmit, categories, editingPrompt }) => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [category, setCategory] = useState('general');
-
-  useEffect(() => {
-    if (editingPrompt) {
-      setTitle(editingPrompt.title);
-      setContent(editingPrompt.content);
-      setCategory(editingPrompt.category);
-    } else {
-      setTitle('');
-      setContent('');
-      setCategory('general');
-    }
-  }, [editingPrompt, isOpen]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit({ title, content, category });
-    setTitle('');
-    setContent('');
-    setCategory('general');
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">
-              {editingPrompt ? 'Edit Prompt' : 'Create New Prompt'}
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ✕
-            </button>
-          </div>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Title
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="input"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="input"
-              >
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Prompt Content
-              </label>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={6}
-                className="textarea"
-                placeholder="Enter your prompt here. Use {{variable_name}} for dynamic placeholders."
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Use {'{{variable_name}}'} for dynamic placeholders
-              </p>
-            </div>
-            
-            <div className="flex space-x-3 pt-4">
-              <button
-                type="submit"
-                className="btn-primary flex-1"
-              >
-                {editingPrompt ? 'Update' : 'Create'} Prompt
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-secondary flex-1"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const GenerateModal = ({ isOpen, onClose, prompt, onGenerate }) => {
-  const [variables, setVariables] = useState({});
-  const [generatedContent, setGeneratedContent] = useState('');
-
-  useEffect(() => {
-    if (prompt && isOpen) {
-      const initialVars = {};
-      prompt.variables.forEach(varName => {
-        initialVars[varName] = '';
-      });
-      setVariables(initialVars);
-      setGeneratedContent('');
-    }
-  }, [prompt, isOpen]);
-
-  const handleGenerate = async () => {
-    try {
-      const result = await ApiService.post(`/api/prompts/${prompt.id}/generate`, variables);
-      setGeneratedContent(result.generated_content);
-    } catch (error) {
-      alert('Error generating content');
-    }
-  };
-
-  const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(generatedContent);
-    alert('Copied to clipboard!');
-  };
-
-  if (!isOpen || !prompt) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Generate from Template</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ✕
-            </button>
-          </div>
-          
-          <div className="mb-4">
-            <h3 className="font-medium text-gray-900 mb-2">{prompt.title}</h3>
-            <p className="text-sm text-gray-600 mb-4">{prompt.content}</p>
-          </div>
-          
-          <div className="space-y-4">
-            {prompt.variables.map(varName => (
-              <div key={varName}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {varName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </label>
-                <input
-                  type="text"
-                  value={variables[varName] || ''}
-                  onChange={(e) => setVariables({...variables, [varName]: e.target.value})}
-                  className="input"
-                  placeholder={`Enter ${varName}`}
-                />
-              </div>
-            ))}
-            
-            <button
-              onClick={handleGenerate}
-              className="btn-primary w-full"
-              disabled={Object.values(variables).some(val => !val.trim())}
-            >
-              Generate Content
-            </button>
-            
-            {generatedContent && (
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Generated Content
-                </label>
-                <textarea
-                  value={generatedContent}
-                  readOnly
-                  rows={6}
-                  className="textarea bg-gray-50"
-                />
-                <button
-                  onClick={handleCopyToClipboard}
-                  className="btn-secondary w-full mt-2"
-                >
-                  Copy to Clipboard
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const Dashboard = ({ user, onLogout }) => {
   const [prompts, setPrompts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -471,6 +169,8 @@ const Dashboard = ({ user, onLogout }) => {
       setCategories(categoriesData);
     } catch (error) {
       console.error('Error loading data:', error);
+      iosNative.hapticFeedback('error');
+      iosNative.showIOSToast('Error loading data');
     } finally {
       setLoading(false);
     }
@@ -478,6 +178,12 @@ const Dashboard = ({ user, onLogout }) => {
 
   useEffect(() => {
     loadData();
+    
+    // Initialize pull-to-refresh
+    const mainElement = document.querySelector('main');
+    if (mainElement) {
+      iosNative.initializePullToRefresh(mainElement, loadData);
+    }
   }, []);
 
   const filteredPrompts = prompts.filter(prompt => {
@@ -490,36 +196,60 @@ const Dashboard = ({ user, onLogout }) => {
 
   const handleCreatePrompt = async (promptData) => {
     try {
+      iosNative.hapticFeedback('medium');
+      const loadingIndicator = iosNative.showActivityIndicator(editingPrompt ? 'Updating prompt...' : 'Creating prompt...');
+      
       if (editingPrompt) {
         await ApiService.put(`/api/prompts/${editingPrompt.id}`, promptData);
+        iosNative.showIOSToast('Prompt updated successfully!');
       } else {
         await ApiService.post('/api/prompts', promptData);
+        iosNative.showIOSToast('Prompt created successfully!');
       }
+      
       await loadData();
       setShowCreateModal(false);
       setEditingPrompt(null);
+      iosNative.hapticFeedback('success');
+      
+      loadingIndicator.hide();
     } catch (error) {
-      alert('Error saving prompt');
+      iosNative.hapticFeedback('error');
+      iosNative.showIOSToast('Error saving prompt');
     }
   };
 
   const handleDeletePrompt = async (promptId) => {
+    // iOS-style confirmation
+    iosNative.hapticFeedback('warning');
+    
     if (window.confirm('Are you sure you want to delete this prompt?')) {
       try {
+        iosNative.hapticFeedback('medium');
+        const loadingIndicator = iosNative.showActivityIndicator('Deleting prompt...');
+        
         await ApiService.delete(`/api/prompts/${promptId}`);
         await loadData();
+        
+        iosNative.hapticFeedback('success');
+        iosNative.showIOSToast('Prompt deleted successfully!');
+        
+        loadingIndicator.hide();
       } catch (error) {
-        alert('Error deleting prompt');
+        iosNative.hapticFeedback('error');
+        iosNative.showIOSToast('Error deleting prompt');
       }
     }
   };
 
   const handleEditPrompt = (prompt) => {
+    iosNative.hapticFeedback('light');
     setEditingPrompt(prompt);
     setShowCreateModal(true);
   };
 
   const handleGeneratePrompt = (prompt) => {
+    iosNative.hapticFeedback('light');
     setGeneratingPrompt(prompt);
     setShowGenerateModal(true);
   };
@@ -527,17 +257,20 @@ const Dashboard = ({ user, onLogout }) => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-ios-background ios-smooth-scroll">
       <Header 
         user={user} 
         onLogout={onLogout}
-        onShowCreate={() => setShowCreateModal(true)}
+        onShowCreate={() => {
+          iosNative.hapticFeedback('light');
+          setShowCreateModal(true);
+        }}
       />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ios-safe-area-bottom">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Prompt Library</h2>
-          <p className="text-gray-600">
+          <h2 className="ios-title1 text-gray-900 mb-2">Your Prompt Library</h2>
+          <p className="ios-body text-gray-600">
             Manage and organize your AI prompts efficiently
           </p>
         </div>
@@ -556,10 +289,10 @@ const Dashboard = ({ user, onLogout }) => {
         {filteredPrompts.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-400 text-6xl mb-4">📝</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className="ios-headline text-gray-900 mb-2">
               {searchQuery || selectedCategory ? 'No prompts found' : 'No prompts yet'}
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="ios-body text-gray-600 mb-4">
               {searchQuery || selectedCategory 
                 ? 'Try adjusting your search or category filter'
                 : 'Create your first prompt to get started'
@@ -567,8 +300,11 @@ const Dashboard = ({ user, onLogout }) => {
             </p>
             {!searchQuery && !selectedCategory && (
               <button
-                onClick={() => setShowCreateModal(true)}
-                className="btn-primary"
+                onClick={() => {
+                  iosNative.hapticFeedback('medium');
+                  setShowCreateModal(true);
+                }}
+                className="ios-btn-primary"
               >
                 Create Your First Prompt
               </button>
@@ -593,6 +329,7 @@ const Dashboard = ({ user, onLogout }) => {
       <CreatePromptModal
         isOpen={showCreateModal}
         onClose={() => {
+          iosNative.hapticFeedback('light');
           setShowCreateModal(false);
           setEditingPrompt(null);
         }}
@@ -604,6 +341,7 @@ const Dashboard = ({ user, onLogout }) => {
       <GenerateModal
         isOpen={showGenerateModal}
         onClose={() => {
+          iosNative.hapticFeedback('light');
           setShowGenerateModal(false);
           setGeneratingPrompt(null);
         }}
@@ -620,8 +358,10 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initialize iOS native features
+    iosNative.initializeIOSFeatures();
+    
     // Check for session token in URL (from auth redirect)
-    const urlParams = new URLSearchParams(window.location.search);
     const fragment = window.location.hash;
     
     if (fragment.includes('session_id=')) {
@@ -641,6 +381,9 @@ const App = () => {
 
   const handleAuthCallback = async (sessionId) => {
     try {
+      iosNative.hapticFeedback('medium');
+      const loadingIndicator = iosNative.showActivityIndicator('Signing in...');
+      
       const response = await fetch(`${API_BASE}/api/auth/session`, {
         method: 'POST',
         headers: {
@@ -654,12 +397,18 @@ const App = () => {
         Cookies.set('session_token', data.session_token, { expires: 7 });
         setUser(data.user);
         window.history.replaceState({}, document.title, window.location.pathname);
+        
+        iosNative.hapticFeedback('success');
+        iosNative.showIOSToast(`Welcome back, ${data.user.name}!`);
       } else {
         throw new Error('Authentication failed');
       }
+      
+      loadingIndicator.hide();
     } catch (error) {
       console.error('Auth error:', error);
-      alert('Authentication failed. Please try again.');
+      iosNative.hapticFeedback('error');
+      iosNative.showIOSToast('Authentication failed. Please try again.');
     }
     setLoading(false);
   };
@@ -676,8 +425,14 @@ const App = () => {
   };
 
   const handleLogout = () => {
-    Cookies.remove('session_token');
-    setUser(null);
+    iosNative.hapticFeedback('medium');
+    
+    if (window.confirm('Are you sure you want to logout?')) {
+      Cookies.remove('session_token');
+      setUser(null);
+      iosNative.hapticFeedback('success');
+      iosNative.showIOSToast('Logged out successfully');
+    }
   };
 
   if (loading) {
@@ -686,7 +441,7 @@ const App = () => {
 
   return (
     <Router>
-      <div className="App">
+      <div className="App ios-touch-optimized">
         {user ? (
           <Dashboard user={user} onLogout={handleLogout} />
         ) : (
